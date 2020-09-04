@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using CommanderAPI.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Serialization;
 
 namespace CommanderAPI
 {
@@ -29,15 +31,22 @@ namespace CommanderAPI
         public void ConfigureServices(IServiceCollection services)
         {
 
-            var builder = new SqlConnectionStringBuilder();
-            builder.ConnectionString = Configuration.GetConnectionString("DefaultConnection");
-            builder.UserID = Configuration["UserID"];
-            builder.Password = Configuration["Password"];
+            var builder = new SqlConnectionStringBuilder
+            {
+                ConnectionString = Configuration.GetConnectionString("DefaultConnection"),
+                UserID = Configuration["UserID"],
+                Password = Configuration["Password"]
+            };
 
             services.AddDbContext<CommanderContext>(opt => opt.UseSqlServer(builder.ConnectionString));
 
-            services.AddControllers();
-            services.AddScoped<ICommanderRepository, MockCommanderRepository>();
+
+            //Para ter a possibilidade de utilizar o metodo json patch.
+            services.AddControllers().AddNewtonsoftJson(s=> s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver());
+
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            services.AddScoped<ICommanderRepository, SqlCommanderRepository>();
 
 
         }
